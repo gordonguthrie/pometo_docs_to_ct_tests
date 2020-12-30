@@ -2,7 +2,7 @@
 
 -export([init/1, do/1, format_error/1]).
 
--define(PROVIDER, pometo_docs_to_tests).
+-define(PROVIDER, pometo_docs_to_ct_tests).
 -define(DEPS, [app_discovery]).
 
 -define(IN_TEXT,        1).
