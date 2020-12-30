@@ -1,0 +1,18 @@
+version: "3.4"
+
+services:
+
+  pometo_docs_to_ct_tests:
+    build:
+      dockerfile: ./docker/pometo_docs_to_ct_tests.dockerfile
+      context: ./
+    environment:
+      DISPLAY: host.docker.internal:0
+    volumes:
+      - type: bind
+        source: ./
+        target: /pometo_docs_to_ct_tests
+        # for xwindows
+      #- type: bind
+      #  source: /tmp/.X11-unix
+      #  target: /tmp/.X11-unix
