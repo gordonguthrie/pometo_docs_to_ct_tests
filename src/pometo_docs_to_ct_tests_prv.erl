@@ -139,9 +139,9 @@ gen_test3([Line | T], ?GETTING_LAZY, Test, All, Acc) ->
 gen_test3([Line | T], ?GETTING_TEST, Test, All, Acc) ->
 		#test{codeacc = C} = Test,
 		gen_test3(T, ?GETTING_TEST, Test#test{codeacc = [string:trim(Line, trailing, "\n") | C]}, All, Acc);
-gen_test3(["## " ++ Title | T], ?IN_TEXT, Test, All, Acc) ->
+gen_test3(["## " ++ Title | T], ?IN_TEXT, #test{seq = N} = Test, All, Acc) ->
 		NewTitle = normalise(Title),
-		gen_test3(T, ?IN_TEXT, Test#test{title = NewTitle}, [NewTitle | All], Acc);
+		gen_test3(T, ?IN_TEXT, Test#test{title = NewTitle}, [{N, NewTitle} | All], Acc);
 gen_test3([_H | T], ?IN_TEXT, Test, All, Acc) ->
 		gen_test3(T, ?IN_TEXT, Test, All, Acc).
 
