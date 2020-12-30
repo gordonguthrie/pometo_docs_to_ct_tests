@@ -158,10 +158,10 @@ process_test(Test, All, Acc) ->
 		_  -> Tt
 	end,
 	case {C, R, L} of
-		{[], [], [], []} ->
+		{[], [], []} ->
 			% we have to stash the title
 			{#test{seq = N + 1, stashedtitle = Tt}, Acc};
-		{_, _, [], []} ->
+		{_, _, []} ->
 			{NewTitle1, NewTest1} = make_test(St, "interpreter",            integer_to_list(N), lists:reverse(C), lists:reverse(R)),
 			{NewTitle2, NewTest2} = make_test(St, "compiler",               integer_to_list(N), lists:reverse(C), lists:reverse(R)),
 			{NewTitle3, NewTest3} = make_test(St, "compiler_lazy",          integer_to_list(N), lists:reverse(C), lists:reverse(R)),
@@ -173,7 +173,7 @@ process_test(Test, All, Acc) ->
 			{#test{seq = N + 1, stashedtitle = At}, 
 				[NewTitle6, NewTitle5, NewTitle4, NewTitle3, NewTitle2, NewTitle1 | All],
 				[NewTest6, NewTest5, NewTest4, NewTest3, NewTest2, NewTest1 | Acc]};
-		{_, _, _, _} ->
+		{_, _, _} ->
 			{NewTitle1, NewTest1} = make_test(St, "interpreter",            integer_to_list(N), lists:reverse(C), lists:reverse(R)),
 			{NewTitle2, NewTest2} = make_test(St, "compiler",               integer_to_list(N), lists:reverse(C), lists:reverse(R)),
 			{NewTitle3, NewTest3} = make_test(St, "compiler_lazy",          integer_to_list(N), lists:reverse(C), lists:reverse(L)),
