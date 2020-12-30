@@ -160,7 +160,7 @@ process_test(Test, All, Acc) ->
 	case {C, R, L} of
 		{[], [], []} ->
 			% we have to stash the title
-			{#test{seq = N + 1, stashedtitle = Tt}, Acc};
+			{#test{seq = N + 1, stashedtitle = Tt}, All, Acc};
 		{_, _, []} ->
 			{NewTitle1, NewTest1} = make_test(St, "interpreter",            integer_to_list(N), lists:reverse(C), lists:reverse(R)),
 			{NewTitle2, NewTest2} = make_test(St, "compiler",               integer_to_list(N), lists:reverse(C), lists:reverse(R)),
