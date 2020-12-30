@@ -102,6 +102,7 @@ generate_tests(File, GeneratedTestDir) ->
 gen_test2(Filename, Lines, GeneratedTestDir) ->
 		{All, Body} = gen_test3(Lines, ?IN_TEXT, #test{}, [], []),
 		io:format("in gen_test2 All is ~p~n", [All]),
+		AllClause = make_all(All),
 		case Body of
 				[] -> ok;
 				_  -> io:format("* writing test ~p~n", [Filename ++ ".erl"]),
@@ -109,7 +110,7 @@ gen_test2(Filename, Lines, GeneratedTestDir) ->
 							Header     = "-module(" ++ Filename ++ ").\n\n",
 							Include    = "-include_lib(\"eunit/include/eunit.hrl\").\n\n",
 							Export     = "-compile([export_all]).\n\n",
-							Module = Disclaimer ++ Header ++ Include ++ Export ++ Body,
+							Module = Disclaimer ++ Header ++ Include ++ Export ++ AllClause ++ Body,
 							DirAndFile = string:join([GeneratedTestDir, Filename ++ ".erl"], "/"),
 							ok = file:write_file(DirAndFile, Module)
 		end,
@@ -144,6 +145,9 @@ gen_test3(["## " ++ Title | T], ?IN_TEXT, Test, All, Acc) ->
 		gen_test3(T, ?IN_TEXT, Test#test{title = NewTitle}, All, Acc);
 gen_test3([_H | T], ?IN_TEXT, Test, All, Acc) ->
 		gen_test3(T, ?IN_TEXT, Test, All, Acc).
+
+make_all(Alls) ->
+	"all() -> [" ++ string:join(Alls, ", ") ++ "].\n\n".
 
 process_test(Test, All, Acc) ->
 	#test{seq          = N,
