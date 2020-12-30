@@ -119,15 +119,15 @@ gen_test3([], _, #test{stashedtitle = NewTitle} = Test, All, Acc) ->
 	% there is a problem with the deferred processing of a page
 	% this is how we deal with it - we pull the stashed title out and use that
 	% on the final walk around the park...
-	{_NewTest, NewAcc} = process_test(Test#test{title = NewTitle}, Acc),
-	{lists:reverse(All), lists:flatten(lists:reverse(NewAcc))};
+	{_NewTest, NewAll, NewAcc} = process_test(Test#test{title = NewTitle}, All, Acc),
+	{lists:reverse(NewAll), lists:flatten(lists:reverse(NewAcc))};
 gen_test3(["```pometo_results" ++ _Rest | T], ?IN_TEXT, Test, All, Acc) ->
 		gen_test3(T, ?GETTING_RESULT, Test, All, Acc);
 gen_test3(["```pometo_lazy" ++ _Rest | T], ?IN_TEXT, Test, All, Acc) ->
 		gen_test3(T, ?GETTING_LAZY, Test, All, Acc);
 gen_test3(["```pometo" ++ _Rest | T], ?IN_TEXT, Test, All, Acc) ->
-		{NewTest, NewAcc} = process_test(Test, Acc),
-		gen_test3(T, ?GETTING_TEST, NewTest, All, NewAcc);
+		{NewTest, NewAll, NewAcc} = process_test(Test, All, Acc),
+		gen_test3(T, ?GETTING_TEST, NewTest, NewAll, NewAcc);
 gen_test3(["```" ++ _Rest | T], _, Test, All, Acc) ->
 		gen_test3(T, ?IN_TEXT, Test, All, Acc);
 gen_test3([Line | T], ?GETTING_RESULT, Test, All, Acc) ->
@@ -139,13 +139,13 @@ gen_test3([Line | T], ?GETTING_LAZY, Test, All, Acc) ->
 gen_test3([Line | T], ?GETTING_TEST, Test, All, Acc) ->
 		#test{codeacc = C} = Test,
 		gen_test3(T, ?GETTING_TEST, Test#test{codeacc = [string:trim(Line, trailing, "\n") | C]}, All, Acc);
-gen_test3(["## " ++ Title | T], ?IN_TEXT, #test{seq = N} = Test, All, Acc) ->
+gen_test3(["## " ++ Title | T], ?IN_TEXT, Test, All, Acc) ->
 		NewTitle = normalise(Title),
-		gen_test3(T, ?IN_TEXT, Test#test{title = NewTitle}, [{N, NewTitle} | All], Acc);
+		gen_test3(T, ?IN_TEXT, Test#test{title = NewTitle}, All, Acc);
 gen_test3([_H | T], ?IN_TEXT, Test, All, Acc) ->
 		gen_test3(T, ?IN_TEXT, Test, All, Acc).
 
-process_test(Test, Acc) ->
+process_test(Test, All, Acc) ->
 	#test{seq          = N,
 				title        = Tt,
 				codeacc      = C,
@@ -158,29 +158,33 @@ process_test(Test, Acc) ->
 		_  -> Tt
 	end,
 	case {C, R, L} of
-		{[], [], []} ->
+		{[], [], [], []} ->
 			% we have to stash the title
 			{#test{seq = N + 1, stashedtitle = Tt}, Acc};
-		{_, _, []} ->
-			NewTest1 = make_test(St, "interpreter",            integer_to_list(N), lists:reverse(C), lists:reverse(R)),
-			NewTest2 = make_test(St, "compiler",               integer_to_list(N), lists:reverse(C), lists:reverse(R)),
-			NewTest3 = make_test(St, "compiler_lazy",          integer_to_list(N), lists:reverse(C), lists:reverse(R)),
-			NewTest4 = make_test(St, "compiler_indexed",       integer_to_list(N), lists:reverse(C), lists:reverse(R)),
-			NewTest5 = make_test(St, "compiler_force_index",   integer_to_list(N), lists:reverse(C), lists:reverse(R)),
-			NewTest6 = make_test(St, "compiler_force_unindex", integer_to_list(N), lists:reverse(C), lists:reverse(R)),
+		{_, _, [], []} ->
+			{NewTitle1, NewTest1} = make_test(St, "interpreter",            integer_to_list(N), lists:reverse(C), lists:reverse(R)),
+			{NewTitle2, NewTest2} = make_test(St, "compiler",               integer_to_list(N), lists:reverse(C), lists:reverse(R)),
+			{NewTitle3, NewTest3} = make_test(St, "compiler_lazy",          integer_to_list(N), lists:reverse(C), lists:reverse(R)),
+			{NewTitle4, NewTest4} = make_test(St, "compiler_indexed",       integer_to_list(N), lists:reverse(C), lists:reverse(R)),
+			{NewTitle5, NewTest5} = make_test(St, "compiler_force_index",   integer_to_list(N), lists:reverse(C), lists:reverse(R)),
+			{NewTitle6, NewTest6} = make_test(St, "compiler_force_unindex", integer_to_list(N), lists:reverse(C), lists:reverse(R)),
 			%%% we preserve the title, the sequence number will keep the test name different
 			%%% if there isn't another title given anyhoo
-			{#test{seq = N + 1, stashedtitle = At}, [NewTest6, NewTest5, NewTest4, NewTest3, NewTest2, NewTest1 | Acc]};
-		{_, _, _} ->
-			NewTest1 = make_test(St, "interpreter",            integer_to_list(N), lists:reverse(C), lists:reverse(R)),
-			NewTest2 = make_test(St, "compiler",               integer_to_list(N), lists:reverse(C), lists:reverse(R)),
-			NewTest3 = make_test(St, "compiler_lazy",          integer_to_list(N), lists:reverse(C), lists:reverse(L)),
-			NewTest4 = make_test(St, "compiler_indexed",       integer_to_list(N), lists:reverse(C), lists:reverse(R)),
-			NewTest5 = make_test(St, "compiler_force_index",   integer_to_list(N), lists:reverse(C), lists:reverse(R)),
-			NewTest6 = make_test(St, "compiler_force_unindex", integer_to_list(N), lists:reverse(C), lists:reverse(R)),
+			{#test{seq = N + 1, stashedtitle = At}, 
+				[NewTitle6, NewTitle5, NewTitle4, NewTitle3, NewTitle2, NewTitle1 | All],
+				[NewTest6, NewTest5, NewTest4, NewTest3, NewTest2, NewTest1 | Acc]};
+		{_, _, _, _} ->
+			{NewTitle1, NewTest1} = make_test(St, "interpreter",            integer_to_list(N), lists:reverse(C), lists:reverse(R)),
+			{NewTitle2, NewTest2} = make_test(St, "compiler",               integer_to_list(N), lists:reverse(C), lists:reverse(R)),
+			{NewTitle3, NewTest3} = make_test(St, "compiler_lazy",          integer_to_list(N), lists:reverse(C), lists:reverse(L)),
+			{NewTitle4, NewTest4} = make_test(St, "compiler_indexed",       integer_to_list(N), lists:reverse(C), lists:reverse(R)),
+			{NewTitle5, NewTest5} = make_test(St, "compiler_force_index",   integer_to_list(N), lists:reverse(C), lists:reverse(R)),
+			{NewTitle6, NewTest6} = make_test(St, "compiler_force_unindex", integer_to_list(N), lists:reverse(C), lists:reverse(R)),
 			%%% we preserve the title, the sequence number will keep the test name different
 			%%% if there isn't another title given anyhoo
-			{#test{seq = N + 1, stashedtitle = At}, [NewTest6, NewTest5, NewTest4, NewTest3, NewTest2, NewTest1 | Acc]}
+			{#test{seq = N + 1, stashedtitle = At},
+				[NewTitle6, NewTitle5, NewTitle4, NewTitle3, NewTitle2, NewTitle1 | All],
+				[NewTest6, NewTest5, NewTest4, NewTest3, NewTest2, NewTest1 | Acc]}
 	end.
 
 normalise(Text) ->
@@ -223,7 +227,7 @@ make_test(Title, Type, Seq, Code, Results) ->
 		end,
 	Printing = "    % ?debugFmt(\" in " ++ NameRoot ++ "(" ++ Type ++ ")~nCode:~n~ts~nExp:~n~ts~nGot:~n~ts~n\", [Code, Expected, Got]),\n",
 	Assert   = "    ?_assertEqual(Expected, Got).\n\n",
-	Main ++ Call ++ Printing ++ Assert.
+	{NameRoot, Main ++ Call ++ Printing ++ Assert}.
 
 read_lines(File) ->
 		case file:open(File, read) of
