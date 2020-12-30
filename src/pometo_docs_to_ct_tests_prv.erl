@@ -1,4 +1,4 @@
--module(pometo_docs_to_ct__teststests_prv).
+-module(pometo_docs_to_ct_tests_prv).
 
 -export([init/1, do/1, format_error/1]).
 
