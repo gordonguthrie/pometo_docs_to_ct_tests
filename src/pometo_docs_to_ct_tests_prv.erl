@@ -213,7 +213,7 @@ make_test(Title, Type, Seq, Code, Results) ->
 		_  -> Title
 	end,
 	NameRoot = Title2 ++ "_" ++ Seq ++ "_" ++ Type,
-	Main = NameRoot ++ "() ->\n" ++
+	Main = NameRoot ++ "(_Config) ->\n" ++
 		"    Code     = [\"" ++ string:join(Code,    "\",\n    \"") ++ "\"],\n" ++
 		"    Expected = \""  ++ string:join(Results, "\\n\" ++ \n    \"") ++ "\",\n",
 	Call = case Type of
