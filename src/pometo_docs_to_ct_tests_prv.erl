@@ -101,9 +101,7 @@ generate_tests(File, GeneratedTestDir) ->
 
 gen_test2(Filename, Lines, GeneratedTestDir) ->
 		{All, Body} = gen_test3(Lines, ?IN_TEXT, #test{}, [], []),
-		io:format("in gen_test2 All is ~p~n", [All]),
 		AllClause = make_all(All),
-		io:format("in gen_test2 AllClause is ~p~n", [AllClause]),
 		case Body of
 				[] -> ok;
 				_  -> io:format("* writing test ~p~n", [Filename ++ ".erl"]),
