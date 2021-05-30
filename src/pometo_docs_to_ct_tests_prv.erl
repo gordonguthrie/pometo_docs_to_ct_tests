@@ -76,6 +76,7 @@ make_tests(App) ->
 
 get_files(Root) ->
 		RawFiles = filelib:wildcard(Root),
+		io:format("Rawfiles is ~p~n", [RawFiles]),
 		Files     = [{X} || X <- RawFiles, filename:extension(X) == ".md"],
 		Dirs      = [X   || X <- RawFiles, filelib:is_dir(X),
 																			 filename:basename(X) /= "_site",
