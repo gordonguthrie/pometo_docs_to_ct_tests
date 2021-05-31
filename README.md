@@ -14,7 +14,7 @@ Use
 Add the plugin to your rebar config:
 
     {plugins, [
-        {pometo_docs_to_tests, {git, "https://github.com/gordonguthrie/pometo_docs_to_ct_tests"}}
+        {pometo_docs_to_ct_tests, {git, "https://github.com/gordonguthrie/pometo_docs_to_ct_tests.git", {branch, "main"}}}
     ]}.
 
 Then just call your plugin directly in an existing application:
