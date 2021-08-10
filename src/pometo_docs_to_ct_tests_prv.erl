@@ -229,7 +229,7 @@ make_test(Title, Type, Seq, Code, Results) ->
 			"    Got = pometo_test_helper:run_" ++ Type ++ "_test(\"" ++ NameRoot ++ "\", Code),\n"
 		end,
 	Printing = "    io:format(\" in " ++ NameRoot ++ "(" ++ Type ++ ")~nCode:~n~ts~nExp:~n~ts~nGot:~n~ts~n\", [Code, Expected, Got]),\n",
-	Assert   = "    ?_assertEqual(Expected, Got).\n\n",
+	Assert   = "    ?assertEqual(Expected, Got).\n\n",
 	{NameRoot, Main ++ Call ++ Printing ++ Assert}.
 
 read_lines(File) ->
