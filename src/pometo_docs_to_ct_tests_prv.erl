@@ -230,7 +230,7 @@ make_test(Title, Type, Seq, Code, Results) ->
 		end,
 	Printing = "    io:format(\" in " ++ NameRoot ++ "(" ++ Type ++ ")~nCode:~n~ts~nExp:~n~ts~nGot:~n~ts~n\", [Code, Expected, Got]),\n",
 	Assert   = "    ?_assertEqual(Expected, Got).\n\n",
-	Main ++ Call ++ Printing ++ Assert.
+	{NameRoot, Main ++ Call ++ Printing ++ Assert}.
 
 read_lines(File) ->
 		case file:open(File, read) of
