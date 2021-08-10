@@ -221,7 +221,7 @@ make_test(Title, Type, Seq, Code, Results) ->
 		"compiler_indexed" ->
 			"    Got = pometo_test_helper:run_" ++ Type ++ "_test(\"" ++ NameRoot ++ "\", Code),\n"
 		end,
-	Printing = "    % ?debugFmt(\" in " ++ NameRoot ++ "(" ++ Type ++ ")~nCode:~n~ts~nExp:~n~ts~nGot:~n~ts~n\", [Code, Expected, Got]),\n",
+	Printing = "    io:format(\" in " ++ NameRoot ++ "(" ++ Type ++ ")~nCode:~n~ts~nExp:~n~ts~nGot:~n~ts~n\", [Code, Expected, Got]),\n",
 	Assert   = "    ?_assertEqual(Expected, Got).\n\n",
 	Main ++ Call ++ Printing ++ Assert.
 
