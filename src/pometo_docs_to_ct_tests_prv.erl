@@ -81,6 +81,7 @@ get_files(Root) ->
 																			 filename:basename(X) /= "_site",
 																			 filename:basename(X) /= "_data",
 																			 filename:basename(X) /= "_layouts",
+																			 filename:basename(X) /= "erlang_docs",
 																			 filename:basename(X) /= "assets",
 																			 filename:basename(X) /= "images"],
 		BuildWIP = os:getenv("BUILDWIP"),
