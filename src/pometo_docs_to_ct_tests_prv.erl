@@ -39,8 +39,8 @@ init(State) ->
 						{short_desc, "Builds common tests from pometo markdown documentation."},
 						{desc,       "Builds common tests from pometo markdown documentation.\n" ++
 												 "For each pair of marked up code snippets 6 distinct code path tests will be generated.\n" ++
-												 "There is an option for having different results for lazy/interpreted evaluation
-												 (Error results differ in the lazy case/the interpreter resolves some things that the compiler leaves to runtime)\n" ++
+												 "There is an option for having different results for lazy/interpreted evaluation\n" ++
+												 "(Error results differ in the lazy case/the interpreter resolves some things that the compiler leaves to runtime)\n" ++
 												 "Work In Progress docs are excluded by default but can be built using an environment variable.\n" ++
 												 "See https://gordonguthrie.github.io/pometo/implementation_reference/getting_started_as_a_developer_of_the_pometo_runtime_and_language.html#how-to-write-docs-pages-as-tests"}
 		]),
@@ -165,7 +165,6 @@ process_test(Test, All, Acc) ->
 				lazyacc      = L,
 				interpacc    = I,
 				stashedtitle = St} = Test,
-	% we only ocassionally get different lazy results
 	At = case Tt of
 		[] -> St;
 		_  -> Tt
