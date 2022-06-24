@@ -5,10 +5,11 @@
 -define(PROVIDER, pometo_docs_to_ct_tests).
 -define(DEPS, [app_discovery]).
 
--define(IN_TEXT,        1).
--define(GETTING_TEST,   2).
--define(GETTING_RESULT, 3).
--define(GETTING_LAZY,   4).
+-define(IN_TEXT,             1).
+-define(GETTING_TEST,        2).
+-define(GETTING_RESULT,      3).
+-define(GETTING_LAZY,        4).
+-define(GETTING_INTERPRETED, 5).
 
 -define(SPACE, 32).
 -define(UNDERSCORE, 95).
@@ -19,6 +20,7 @@
 							 codeacc      = [],
 							 resultsacc   = [],
 							 lazyacc      = [],
+							 interpacc    = [],
 							 stashedtitle = ""
 		}).
 
@@ -37,7 +39,8 @@ init(State) ->
 						{short_desc, "Builds common tests from pometo markdown documentation."},
 						{desc,       "Builds common tests from pometo markdown documentation.\n" ++
 												 "For each pair of marked up code snippets 6 distinct code path tests will be generated.\n" ++
-												 "There is an option for having different results for lazy evaluation (Error results differ in the lazy case/\n" ++
+												 "There is an option for having different results for lazy/interpreted evaluation
+												 (Error results differ in the lazy case/the interpreter resolves some things that the compiler leaves to runtime)\n" ++
 												 "Work In Progress docs are excluded by default but can be built using an environment variable.\n" ++
 												 "See https://gordonguthrie.github.io/pometo/implementation_reference/getting_started_as_a_developer_of_the_pometo_runtime_and_language.html#how-to-write-docs-pages-as-tests"}
 		]),
@@ -126,6 +129,8 @@ gen_test3(["```pometo_results" ++ _Rest | T], ?IN_TEXT, Test, All, Acc) ->
 		gen_test3(T, ?GETTING_RESULT, Test, All, Acc);
 gen_test3(["```pometo_lazy" ++ _Rest | T], ?IN_TEXT, Test, All, Acc) ->
 		gen_test3(T, ?GETTING_LAZY, Test, All, Acc);
+gen_test3(["```pometo_interpreted" ++ _Rest | T], ?IN_TEXT, Test, All, Acc) ->
+		gen_test3(T, ?GETTING_INTERPRETED, Test, All, Acc);
 gen_test3(["```pometo" ++ _Rest | T], ?IN_TEXT, Test, All, Acc) ->
 		{NewTest, NewAll, NewAcc} = process_test(Test, All, Acc),
 		gen_test3(T, ?GETTING_TEST, NewTest, NewAll, NewAcc);
@@ -137,6 +142,9 @@ gen_test3([Line | T], ?GETTING_RESULT, Test, All, Acc) ->
 gen_test3([Line | T], ?GETTING_LAZY, Test, All, Acc) ->
 		#test{lazyacc = R} = Test,
 		gen_test3(T, ?GETTING_LAZY, Test#test{lazyacc = [string:trim(Line, trailing, "\n") | R]}, All, Acc);
+gen_test3([Line | T], ?GETTING_INTERPRETED, Test, All, Acc) ->
+		#test{interpacc = R} = Test,
+		gen_test3(T, ?GETTING_INTERPRETED, Test#test{interpacc = [string:trim(Line, trailing, "\n") | R]}, All, Acc);
 gen_test3([Line | T], ?GETTING_TEST, Test, All, Acc) ->
 		#test{codeacc = C} = Test,
 		gen_test3(T, ?GETTING_TEST, Test#test{codeacc = [string:trim(Line, trailing, "\n") | C]}, All, Acc);
@@ -155,6 +163,7 @@ process_test(Test, All, Acc) ->
 				codeacc      = C,
 				resultsacc   = R,
 				lazyacc      = L,
+				interpacc    = I,
 				stashedtitle = St} = Test,
 	% we only ocassionally get different lazy results
 	At = case Tt of
@@ -165,28 +174,22 @@ process_test(Test, All, Acc) ->
 		{[], [], []} ->
 			% we have to stash the title
 			{#test{seq = N + 1, stashedtitle = Tt}, All, Acc};
-		{_, _, []} ->
-			{NewTitle1, NewTest1} = make_test(St, "interpreter",            integer_to_list(N), lists:reverse(C), lists:reverse(R)),
-			{NewTitle2, NewTest2} = make_test(St, "compiler",               integer_to_list(N), lists:reverse(C), lists:reverse(R)),
-			{NewTitle3, NewTest3} = make_test(St, "compiler_lazy",          integer_to_list(N), lists:reverse(C), lists:reverse(R)),
+		_ ->
+			{NewTitle1, NewTest1} = case I of
+				[] -> make_test(St, "interpreter", integer_to_list(N), lists:reverse(C), lists:reverse(R));
+				_  -> make_test(St, "interpreter", integer_to_list(N), lists:reverse(C), lists:reverse(I))
+			end,
+			{NewTitle2, NewTest2} = make_test(St, "compiler", integer_to_list(N), lists:reverse(C), lists:reverse(R)),
+			{NewTitle3, NewTest3} = case L of
+				[] -> make_test(St, "compiler_lazy", integer_to_list(N), lists:reverse(C), lists:reverse(R));
+				_  -> make_test(St, "compiler_lazy", integer_to_list(N), lists:reverse(C), lists:reverse(L))
+			end,
 			{NewTitle4, NewTest4} = make_test(St, "compiler_indexed",       integer_to_list(N), lists:reverse(C), lists:reverse(R)),
 			{NewTitle5, NewTest5} = make_test(St, "compiler_force_index",   integer_to_list(N), lists:reverse(C), lists:reverse(R)),
 			{NewTitle6, NewTest6} = make_test(St, "compiler_force_unindex", integer_to_list(N), lists:reverse(C), lists:reverse(R)),
 			%%% we preserve the title, the sequence number will keep the test name different
 			%%% if there isn't another title given anyhoo
 			{#test{seq = N + 1, stashedtitle = At}, 
-				[NewTitle6, NewTitle5, NewTitle4, NewTitle3, NewTitle2, NewTitle1 | All],
-				[NewTest6, NewTest5, NewTest4, NewTest3, NewTest2, NewTest1 | Acc]};
-		{_, _, _} ->
-			{NewTitle1, NewTest1} = make_test(St, "interpreter",            integer_to_list(N), lists:reverse(C), lists:reverse(R)),
-			{NewTitle2, NewTest2} = make_test(St, "compiler",               integer_to_list(N), lists:reverse(C), lists:reverse(R)),
-			{NewTitle3, NewTest3} = make_test(St, "compiler_lazy",          integer_to_list(N), lists:reverse(C), lists:reverse(L)),
-			{NewTitle4, NewTest4} = make_test(St, "compiler_indexed",       integer_to_list(N), lists:reverse(C), lists:reverse(R)),
-			{NewTitle5, NewTest5} = make_test(St, "compiler_force_index",   integer_to_list(N), lists:reverse(C), lists:reverse(R)),
-			{NewTitle6, NewTest6} = make_test(St, "compiler_force_unindex", integer_to_list(N), lists:reverse(C), lists:reverse(R)),
-			%%% we preserve the title, the sequence number will keep the test name different
-			%%% if there isn't another title given anyhoo
-			{#test{seq = N + 1, stashedtitle = At},
 				[NewTitle6, NewTitle5, NewTitle4, NewTitle3, NewTitle2, NewTitle1 | All],
 				[NewTest6, NewTest5, NewTest4, NewTest3, NewTest2, NewTest1 | Acc]}
 	end.
@@ -248,23 +251,21 @@ read_l2(Id, Acc) ->
 
 del_dir(Dir) ->
 	 lists:foreach(fun(D) ->
-										ok = file:del_dir(D)
-								 end, del_all_files([Dir], [])).
+						ok = file:del_dir(D)
+					end, del_all_files([Dir], [])).
 
 del_all_files([], EmptyDirs) ->
 	 EmptyDirs;
 del_all_files([Dir | T], EmptyDirs) ->
 	 {ok, FilesInDir} = file:list_dir(Dir),
 	 {Files, Dirs} = lists:foldl(fun(F, {Fs, Ds}) ->
-																	Path = filename:join([Dir, F]),
-																	case filelib:is_dir(Path) of
-																		 true ->
-																					{Fs, [Path | Ds]};
-																		 false ->
-																					{[Path | Fs], Ds}
-																	end
-															 end, {[],[]}, FilesInDir),
+													Path = filename:join([Dir, F]),
+													case filelib:is_dir(Path) of
+														true  -> {Fs, [Path | Ds]};
+														false -> {[Path | Fs], Ds}
+													end
+								end, {[],[]}, FilesInDir),
 	 lists:foreach(fun(F) ->
-												 ok = file:delete(F)
-								 end, Files),
+							ok = file:delete(F)
+					end, Files),
 	 del_all_files(T ++ Dirs, [Dir | EmptyDirs]).
